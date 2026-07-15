@@ -1,19 +1,19 @@
 import os
 import tempfile
 from pathlib import Path
-from typing import List, Optional, Literal
+from typing import List, Literal, Optional
 
 from langchain_community.document_loaders import (
+    CSVLoader,
+    Docx2txtLoader,
     PyMuPDFLoader,
     TextLoader,
-    Docx2txtLoader,
-    CSVLoader,
     UnstructuredHTMLLoader,
 )
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 LLMBackend = Literal["openai", "ollama", "none"]
 

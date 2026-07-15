@@ -12,7 +12,8 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-st.markdown("""
+st.markdown(
+    """
 <style>
     .stApp header {display: none;}
     .upload-section {border: 2px dashed #4a90d9; border-radius: 12px; padding: 2rem; text-align: center;}
@@ -22,7 +23,9 @@ st.markdown("""
     .source-box {background: #1e293b; border-radius: 6px; padding: 0.75rem; margin: 0.5rem 0; font-size: 0.85rem;}
     .stChatInput {position: fixed; bottom: 0; width: 75%;}
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 if "rag" not in st.session_state:
     st.session_state.rag = RAGEngine()
@@ -31,13 +34,16 @@ if "messages" not in st.session_state:
 if "uploaded_files" not in st.session_state:
     st.session_state.uploaded_files = set()
 
+
 def reset_conversation():
     st.session_state.messages = []
+
 
 def reset_all():
     st.session_state.rag.clear()
     st.session_state.messages = []
     st.session_state.uploaded_files = set()
+
 
 def get_llm_answer(query: str, context: str) -> str:
     backend = st.session_state.get("llm_backend", "none")
@@ -47,7 +53,10 @@ def get_llm_answer(query: str, context: str) -> str:
     if backend == "openai":
         try:
             from openai import OpenAI
-            api_key = st.session_state.get("openai_api_key", "") or os.getenv("OPENAI_API_KEY", "")
+
+            api_key = st.session_state.get("openai_api_key", "") or os.getenv(
+                "OPENAI_API_KEY", ""
+            )
             model = st.session_state.get("openai_model", "gpt-4o-mini")
             if not api_key:
                 return "⚠️ OpenAI API key not configured."
@@ -55,8 +64,14 @@ def get_llm_answer(query: str, context: str) -> str:
             resp = client.chat.completions.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": "Answer the question based solely on the provided context. If the context doesn't contain enough information, say so."},
-                    {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"},
+                    {
+                        "role": "system",
+                        "content": "Answer the question based solely on the provided context. If the context doesn't contain enough information, say so.",
+                    },
+                    {
+                        "role": "user",
+                        "content": f"Context:\n{context}\n\nQuestion: {query}",
+                    },
                 ],
                 temperature=0.3,
                 max_tokens=1024,
@@ -68,6 +83,7 @@ def get_llm_answer(query: str, context: str) -> str:
     if backend == "ollama":
         try:
             import httpx
+
             base_url = st.session_state.get("ollama_url", "http://localhost:11434")
             model = st.session_state.get("ollama_model", "llama3")
             resp = httpx.post(
@@ -75,8 +91,14 @@ def get_llm_answer(query: str, context: str) -> str:
                 json={
                     "model": model,
                     "messages": [
-                        {"role": "system", "content": "Answer the question based solely on the provided context. If the context doesn't contain enough information, say so."},
-                        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"},
+                        {
+                            "role": "system",
+                            "content": "Answer the question based solely on the provided context. If the context doesn't contain enough information, say so.",
+                        },
+                        {
+                            "role": "user",
+                            "content": f"Context:\n{context}\n\nQuestion: {query}",
+                        },
                     ],
                     "stream": False,
                     "options": {"temperature": 0.3},
@@ -89,6 +111,7 @@ def get_llm_answer(query: str, context: str) -> str:
             return f"⚠️ Ollama error: {e}"
 
     return "⚠️ No LLM backend configured."
+
 
 with st.sidebar:
     st.title("⚙️ Settings")
@@ -149,12 +172,16 @@ with st.sidebar:
 
     if st.session_state.rag.get_chunk_count() > 0:
         st.divider()
-        st.caption(f"**{st.session_state.rag.get_chunk_count()}** chunks across **{len(st.session_state.uploaded_files)}** file(s)")
+        st.caption(
+            f"**{st.session_state.rag.get_chunk_count()}** chunks across **{len(st.session_state.uploaded_files)}** file(s)"
+        )
         for src in st.session_state.rag.get_document_sources():
             st.caption(f"📄 {src}")
 
 st.title("📚 RAG Chat")
-st.caption("Upload documents (PDF, DOCX, TXT, MD, CSV, HTML) and ask questions about them.")
+st.caption(
+    "Upload documents (PDF, DOCX, TXT, MD, CSV, HTML) and ask questions about them."
+)
 
 uploaded_files = st.file_uploader(
     "Drag & drop files here",
@@ -169,7 +196,9 @@ if uploaded_files:
     for f in uploaded_files:
         if f.name in st.session_state.uploaded_files:
             continue
-        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(f.name).suffix) as tmp:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=Path(f.name).suffix
+        ) as tmp:
             tmp.write(f.getvalue())
             tmp_path = tmp.name
         try:
@@ -181,7 +210,9 @@ if uploaded_files:
         finally:
             os.unlink(tmp_path)
     if new_files:
-        status_placeholder.success(f"✅ Indexed {new_files} chunks from {len(uploaded_files)} file(s)")
+        status_placeholder.success(
+            f"✅ Indexed {new_files} chunks from {len(uploaded_files)} file(s)"
+        )
         st.rerun()
 
 st.divider()
@@ -192,7 +223,9 @@ for msg in st.session_state.messages:
         if "sources" in msg and msg["sources"]:
             with st.expander("📖 View sources", expanded=False):
                 for i, src in enumerate(msg["sources"]):
-                    st.markdown(f"**Source {i+1}:** `{src.metadata.get('source_file', 'unknown')}`")
+                    st.markdown(
+                        f"**Source {i+1}:** `{src.metadata.get('source_file', 'unknown')}`"
+                    )
                     st.markdown(f"```\n{src.page_content[:500]}\n```")
 
 if prompt := st.chat_input("Ask a question about your documents..."):
@@ -221,21 +254,29 @@ if prompt := st.chat_input("Ask a question about your documents..."):
                 st.markdown("**Retrieved chunks (no LLM backend configured):**")
                 for i, d in enumerate(docs):
                     src = d.metadata.get("source_file", "unknown")
-                    st.markdown(f"""
+                    st.markdown(
+                        f"""
 <div class="source-box">
 <strong>📄 {src}</strong> <em>(similarity rank #{i+1})</em><br>
 {d.page_content[:600]}{'...' if len(d.page_content) > 600 else ''}
 </div>
-""", unsafe_allow_html=True)
+""",
+                        unsafe_allow_html=True,
+                    )
 
-            st.session_state.messages.append({
-                "role": "assistant",
-                "content": answer or "*(See retrieved chunks above)*",
-                "sources": docs,
-            })
+            st.session_state.messages.append(
+                {
+                    "role": "assistant",
+                    "content": answer or "*(See retrieved chunks above)*",
+                    "sources": docs,
+                }
+            )
 
-st.markdown("""
+st.markdown(
+    """
 <div style="text-align: center; color: #64748b; padding: 2rem; font-size: 0.85rem;">
 Built with Streamlit + LangChain + FAISS + Sentence-Transformers
 </div>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)

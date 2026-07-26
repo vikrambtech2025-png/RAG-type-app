@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/icon.svg" width="100%" alt="RAG Chat"/>
+
 # RAG Chat
 
 **Chat with your documents using Retrieval-Augmented Generation**
